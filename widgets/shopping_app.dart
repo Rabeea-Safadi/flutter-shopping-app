@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:shopping_app/data/dummy_data.dart';
+import 'package:shopping_app/data/categories.dart';
 import 'package:shopping_app/models/grocery_item.dart';
 import 'package:shopping_app/widgets/grocery_item.dart';
 import 'package:shopping_app/widgets/new_item.dart';
+import 'package:http/http.dart' as http;
 
 class ShoppingApp extends StatefulWidget {
   const ShoppingApp({super.key});
@@ -12,10 +15,39 @@ class ShoppingApp extends StatefulWidget {
 }
 
 class _ShoppingAppState extends State<ShoppingApp> {
-  late final List<GroceryItem> groceryList = [];
+  List<GroceryItem> groceryList = [];
+  bool _isLoading = true;
+
+  void _loadItems() async {
+    final response = await http.get(kApiUrl);
+    final listData = json.decode(response.body);
+    final List<GroceryItem> loadedItems = [];
+
+    for (final item in listData.entries) {
+      final itemCategory = categories.entries.where((cat) => cat.key.name == item.value['category']).first;
+
+      loadedItems.add(GroceryItem(
+        id: item.key,
+        name: item.value['name'],
+        quantity: item.value['quantity'],
+        category: itemCategory.value,
+      ));
+    }
+
+    setState(() {
+      groceryList = loadedItems;
+      _isLoading = false;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadItems();
+  }
 
   void _addItem() async {
-    final GroceryItem newItem = await showModalBottomSheet(
+    final newItem = await showModalBottomSheet(
       isScrollControlled: false,
       showDragHandle: true,
       useSafeArea: true,
@@ -46,9 +78,19 @@ class _ShoppingAppState extends State<ShoppingApp> {
           ),
         ],
       ),
-      body: groceryList.isNotEmpty
-          ? GroceryList(grocerices: groceryList, onDeleteItem: deleteItem)
-          : const Center(child: Text('No items...\nStart by tapping the add button')),
+      body: getContent(),
     );
+  }
+
+  Widget getContent() {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    return groceryList.isNotEmpty
+        ? GroceryList(grocerices: groceryList, onDeleteItem: deleteItem)
+        : const Center(child: Text('No items...\nStart by tapping the add button'));
   }
 }
