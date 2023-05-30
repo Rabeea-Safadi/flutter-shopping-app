@@ -6,8 +6,6 @@ import 'package:shopping_app/models/category.dart';
 import 'package:http/http.dart' as http;
 import 'package:shopping_app/models/grocery_item.dart';
 
-final kApiUrl = Uri.https('flutter-prep-f2b4a-default-rtdb.firebaseio.com', 'shopping-list.json');
-
 class NewItem extends StatefulWidget {
   const NewItem({super.key});
 
@@ -16,6 +14,7 @@ class NewItem extends StatefulWidget {
 }
 
 class _NewItemState extends State<NewItem> {
+  final apiUrl = Uri.https('flutter-prep-f2b4a-default-rtdb.firebaseio.com', 'shopping-list.json');
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late String _name;
   late int _quantity;
@@ -33,7 +32,7 @@ class _NewItemState extends State<NewItem> {
       _isProcessing = true;
     });
     final response = await http.post(
-      kApiUrl,
+      apiUrl,
       headers: {
         'Content-Type': 'application/json',
       },
